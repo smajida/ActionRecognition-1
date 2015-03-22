@@ -22,10 +22,10 @@ lenSeq_svm = int(argvs[3])
 print "lenSeq_hmm:%d\nn_states:%d\nlenSeq_svm:%d" % (lenSeq_hmm,n_states,lenSeq_svm)
 
 # データの読み込み
-lefthand_mocap_train = pickle.load(open("lefthand_mocap_train", "rb"))
-lefthand_mocap_test = pickle.load(open("lefthand_mocap_test", "rb"))
-labels_train = pickle.load(open("../labels_train.dump", "rb"))
-labels_test = pickle.load(open("../labels_test.dump", "rb"))
+lefthand_mocap_train = pickle.load(open("../TUMKitchenDataset/lefthand_mocap_train", "rb"))
+lefthand_mocap_test = pickle.load(open("../TUMKitchenDataset/lefthand_mocap_test", "rb"))
+labels_train = pickle.load(open("../TUMKitchenDataset/labels_train.dump", "rb"))
+labels_test = pickle.load(open("../TUMKitchenDataset/labels_test.dump", "rb"))
 
 # 学習データ、テストデータそれぞれについてPCAの入力(複数フレーム)をつくる
 ## 学習データのPCA入力
@@ -123,6 +123,7 @@ accuracy = accuracy_score(labels_predicted, labels_svm_test)
 
 print "accuracy=%f" % accuracy
 # 結果の保存
-result = {"accuracy":accuracy, "lenSeq_hmm":lenSeq_hmm, "n_states":n_states, "lenSeq_svm":lenSeq_svm}
+result = {"accuracy":accuracy, "lenSeq_hmm":lenSeq_hmm, "n_states":n_states, "lenSeq_svm":lenSeq_svm, \
+		  "lenSeq_pca":lenSeq_pca, "dimPCA":dimPCA}
 filename = "result_Lh%dns%dLs%d.dump" % (lenSeq_hmm, n_states, lenSeq_svm)
 pickle.dump(result, open(filename,"wb"))
