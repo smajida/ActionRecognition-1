@@ -89,6 +89,14 @@ for i in range(N_LABEL): # どのHMMを使うか
 		lik_test[t_test, i] = list_ghmm[i].score(pcaSeq_test[t_test])
 
 
+# HMMのaccuracyを計算
+labels_predicted_hmm = np.zeros(len(lik_test))
+#尤度最大のものを推定とする
+for t in range(lik_test.shape[0]):
+	lik_test[t] = np.argmax(lik_test[t])
+	accuracy_hmm = accuracy_score(labels_predicted_hmm, labels_pca_test)
+
+
 # SVMに入力する特徴量を生成
 # lenSeqはHMMの入力と共通になっている
 features_train = np.empty((lik_train.shape[0]-(lenSeq_svm-1), N_LABEL*lenSeq_svm))
@@ -118,12 +126,12 @@ print "training SVM..."
 svm_lik = svm.SVC()
 svm_lik.fit(features_train, labels_svm_train)
 
-labels_predicted = svm_lik.predict(features_test)
-accuracy = accuracy_score(labels_predicted, labels_svm_test)
+labels_predicted_SVMlik = svm_lik.predict(features_test)
+accuracy_SVMlik = accuracy_score(labels_predicted_SVMlik, labels_svm_test)
 
-print "accuracy=%f" % accuracy
+print "accuracy=%f" % accuracy_SVMlik
 # 結果の保存
-result = {"accuracy":accuracy, "lenSeq_hmm":lenSeq_hmm, "n_states":n_states, "lenSeq_svm":lenSeq_svm, \
+result = {"accuracy_SVMlik":accuracy_SVMlik, "accuracy_hmm":accuracy_hmm, "lenSeq_hmm":lenSeq_hmm, "n_states":n_states, "lenSeq_svm":lenSeq_svm, \
 		  "lenSeq_pca":lenSeq_pca, "dimPCA":dimPCA}
 filename = "result_Lh%dns%dLs%d.dump" % (lenSeq_hmm, n_states, lenSeq_svm)
 pickle.dump(result, open(filename,"wb"))
