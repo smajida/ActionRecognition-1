@@ -95,6 +95,7 @@ labels_predicted_hmm = np.zeros(len(lik_test))
 for t in range(lik_test.shape[0]):
 	lik_test[t] = np.argmax(lik_test[t])
 	accuracy_hmm = accuracy_score(labels_predicted_hmm, labels_pca_test)
+print "HMM accuracy=%f" % accuracy_hmm
 
 
 # SVMに入力する特徴量を生成
@@ -129,7 +130,7 @@ svm_lik.fit(features_train, labels_svm_train)
 labels_predicted_SVMlik = svm_lik.predict(features_test)
 accuracy_SVMlik = accuracy_score(labels_predicted_SVMlik, labels_svm_test)
 
-print "accuracy=%f" % accuracy_SVMlik
+print "SVM_lik accuracy=%f" % accuracy_SVMlik
 # 結果の保存
 result = {"accuracy_SVMlik":accuracy_SVMlik, "accuracy_hmm":accuracy_hmm, "lenSeq_hmm":lenSeq_hmm, "n_states":n_states, "lenSeq_svm":lenSeq_svm, \
 		  "lenSeq_pca":lenSeq_pca, "dimPCA":dimPCA}
