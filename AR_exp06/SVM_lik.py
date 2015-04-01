@@ -21,6 +21,17 @@ lenSeq_svm = int(argvs[3])
 
 print "lenSeq_hmm:%d\nn_states:%d\nlenSeq_svm:%d" % (lenSeq_hmm,n_states,lenSeq_svm)
 
+def slidingWindow(X, L):
+    # print "input shape:", X.shape
+    dimFeature = X.shape[1]
+    features = np.empty((X.shape[0]-(L-1), dimFeature*L))
+    for i in xrange(L-1, X.shape[0]):
+        feature_reshaped = np.reshape(X[i-(L-1):i+1, :], (1, dimFeature*L))
+        features[i-(L-1), :] = feature_reshaped
+    # print "output shape:", features.shape
+    
+    return features
+
 # データの読み込み
 lefthand_mocap_train = pickle.load(open("../TUMKitchenDataset/lefthand_mocap_train", "rb"))
 lefthand_mocap_test = pickle.load(open("../TUMKitchenDataset/lefthand_mocap_test", "rb"))
@@ -29,16 +40,10 @@ labels_test = pickle.load(open("../TUMKitchenDataset/labels_test.dump", "rb"))
 
 # 学習データ、テストデータそれぞれについてPCAの入力(複数フレーム)をつくる
 ## 学習データのPCA入力
-len_anglevec = lefthand_mocap_train.shape[1]
-features_pca_train = np.empty((len(lefthand_mocap_train)-(lenSeq_pca-1), len_anglevec*lenSeq_pca))
-for i in xrange(lenSeq_pca-1, len(lefthand_mocap_train)):
-    feature_reshaped = np.reshape(lefthand_mocap_train[i-(lenSeq_pca-1):i+1, :], (1, len_anglevec*lenSeq_pca))
-    features_pca_train[i-(lenSeq_pca-1), :] = feature_reshaped
-## テストデータのPCA入力
-features_pca_test = np.empty((len(lefthand_mocap_test)-(lenSeq_pca-1), len_anglevec*lenSeq_pca))
-for i in xrange(lenSeq_pca-1, len(lefthand_mocap_test)):
-    feature_reshaped = np.reshape(lefthand_mocap_test[i-(lenSeq_pca-1):i+1, :], (1, len_anglevec*lenSeq_pca))
-    features_pca_test[i-(lenSeq_pca-1), :] = feature_reshaped
+features_pca_train = slidingWindow(lefthand_mocap_train, L=lenSeq_pca)
+
+# ## テストデータのPCA入力
+features_pca_test = slidingWindow(lefthand_mocap_test, L=lenSeq_pca)
 
 # 線形PCAで学習データ、テストデータのmocapを次元圧縮
 pca = PCA(n_components=dimPCA) # n_components: 圧縮する次元数
@@ -96,7 +101,6 @@ for t in range(lik_test.shape[0]):
 	lik_test[t] = np.argmax(lik_test[t])
 	accuracy_hmm = accuracy_score(labels_predicted_hmm, labels_pca_test)
 print "HMM accuracy=%f" % accuracy_hmm
-
 
 # SVMに入力する特徴量を生成
 # lenSeqはHMMの入力と共通になっている
