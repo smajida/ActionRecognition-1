@@ -104,23 +104,25 @@ print "HMM accuracy=%f" % accuracy_hmm
 
 # SVMに入力する特徴量を生成
 # lenSeqはHMMの入力と共通になっている
-features_train = np.empty((lik_train.shape[0]-(lenSeq_svm-1), N_LABEL*lenSeq_svm))
+# features_train = np.empty((lik_train.shape[0]-(lenSeq_svm-1), N_LABEL*lenSeq_svm))
 
-for i in xrange(lenSeq_svm-1, lik_train.shape[0]):
-    likelihood_reshaped = np.reshape(lik_train[i-(lenSeq_svm-1):i+1, :], (1, N_LABEL*lenSeq_svm))
-#     print likelihood_reshaped.shape, features_train.shape
-    features_train[i-(lenSeq_svm-1), :] = likelihood_reshaped
+# for i in xrange(lenSeq_svm-1, lik_train.shape[0]):
+#     likelihood_reshaped = np.reshape(lik_train[i-(lenSeq_svm-1):i+1, :], (1, N_LABEL*lenSeq_svm))
+# #     print likelihood_reshaped.shape, features_train.shape
+#     features_train[i-(lenSeq_svm-1), :] = likelihood_reshaped
+features_train = slidingWindow(lik_train, L=lenSeq_svm)
 
 # featuresの長さに合わせるためにラベル列の前9個を消去
 labels_svm_train = labels_lik_train[lenSeq_svm-1:]
 
 # テスト用
-features_test = np.empty((lik_test.shape[0]-(lenSeq_svm-1), N_LABEL*lenSeq_svm))
+# features_test = np.empty((lik_test.shape[0]-(lenSeq_svm-1), N_LABEL*lenSeq_svm))
 
-for i in xrange(lenSeq_svm-1, lik_test.shape[0]):
-    likelihood_reshaped = np.reshape(lik_test[i-(lenSeq_svm-1):i+1, :], (1, N_LABEL*lenSeq_svm))
-#     print likelihood_reshaped.shape, features_train.shape
-    features_test[i-(lenSeq_svm-1), :] = likelihood_reshaped
+# for i in xrange(lenSeq_svm-1, lik_test.shape[0]):
+#     likelihood_reshaped = np.reshape(lik_test[i-(lenSeq_svm-1):i+1, :], (1, N_LABEL*lenSeq_svm))
+# #     print likelihood_reshaped.shape, features_train.shape
+#     features_test[i-(lenSeq_svm-1), :] = likelihood_reshaped
+features_test = slidingWindow(lik_test, L=lenSeq_svm)
 
 # featuresの長さに合わせるためにラベル列の前を消去
 labels_svm_test = labels_pca_test[lenSeq_svm-1:]
