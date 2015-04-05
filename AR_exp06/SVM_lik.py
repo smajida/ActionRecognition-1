@@ -7,6 +7,7 @@ from sklearn import svm
 from sklearn.hmm import GaussianHMM
 from sklearn.decomposition import PCA
 from sklearn.metrics import accuracy_score
+#from sklearn.preprocessing import scale
 import sys
 import pickle
 
@@ -51,9 +52,12 @@ pca = PCA(n_components=dimPCA) # n_components: 圧縮する次元数
 lefthand_pca_train = pca.fit_transform(features_pca_train)
 lefthand_pca_test = pca.fit_transform(features_pca_test)
 
-# ラベル列の長さをそろえる
-labels_pca_train = labels_train[lenSeq_hmm+lenSeq_pca-2:]
-labels_pca_test = labels_test[lenSeq_hmm+lenSeq_pca-2:]
+# PCA用のラベル
+labels_pca_train = labels_train[lenSeq_pca-1:]
+labels_pca_test = labels_test[lenSeq_pca-1:]
+# HMM用のラベル
+labels_hmm_train = labels_train[lenSeq_hmm+lenSeq_pca-2:]
+labels_hmm_test = labels_test[lenSeq_hmm+lenSeq_pca-2:]
 
 # 次元削減したMocap系列をlenSeq_hmmの長さに分割
 pcaSeq_train = [[], [], [], [], [], [], [], [], []] # もっと綺麗に書く
@@ -65,7 +69,6 @@ pcaSeq_test = [] # もっと綺麗に書く
 for t in range(lefthand_pca_test.shape[0]-(lenSeq_hmm-1)):
     seq = lefthand_pca_test[t:t+lenSeq_hmm, :]
     pcaSeq_test.append(seq)
-# print len(pcaSeq_test)
 
 # 各行動ごとにGaussianHMMをつくりリストに格納し学習
 print "training HMM..."
@@ -76,7 +79,6 @@ for i in range(N_LABEL):
 
 lik_train = np.empty((lefthand_pca_train.shape[0]-(lenSeq_hmm-1), N_LABEL)) # 学習データ尤度行列
 lik_test = np.empty((len(pcaSeq_test), N_LABEL)) # テストデータ尤度行列
-# print lik_test.shape, lik_train.shape
 
 # 学習後のHMMにより尤度計算
 print "computing likelihood..."
@@ -96,49 +98,102 @@ for i in range(N_LABEL): # どのHMMを使うか
 
 # HMMのaccuracyを計算
 labels_predicted_hmm = np.zeros(len(lik_test))
-#尤度最大のものを推定とする
+# 尤度最大のものを推定とする
 for t in range(lik_test.shape[0]):
 	lik_test[t] = np.argmax(lik_test[t])
-	accuracy_hmm = accuracy_score(labels_predicted_hmm, labels_pca_test)
+	accuracy_hmm = accuracy_score(labels_predicted_hmm, labels_hmm_test)
 print "HMM accuracy=%f" % accuracy_hmm
 
-# SVMに入力する特徴量を生成
-# lenSeqはHMMの入力と共通になっている
-# features_train = np.empty((lik_train.shape[0]-(lenSeq_svm-1), N_LABEL*lenSeq_svm))
 
-# for i in xrange(lenSeq_svm-1, lik_train.shape[0]):
-#     likelihood_reshaped = np.reshape(lik_train[i-(lenSeq_svm-1):i+1, :], (1, N_LABEL*lenSeq_svm))
-# #     print likelihood_reshaped.shape, features_train.shape
-#     features_train[i-(lenSeq_svm-1), :] = likelihood_reshaped
-features_train = slidingWindow(lik_train, L=lenSeq_svm)
+##############################################
+# 尤度を特徴量としたSVM
 
-# featuresの長さに合わせるためにラベル列の前9個を消去
-labels_svm_train = labels_lik_train[lenSeq_svm-1:]
-
-# テスト用
-# features_test = np.empty((lik_test.shape[0]-(lenSeq_svm-1), N_LABEL*lenSeq_svm))
-
-# for i in xrange(lenSeq_svm-1, lik_test.shape[0]):
-#     likelihood_reshaped = np.reshape(lik_test[i-(lenSeq_svm-1):i+1, :], (1, N_LABEL*lenSeq_svm))
-# #     print likelihood_reshaped.shape, features_train.shape
-#     features_test[i-(lenSeq_svm-1), :] = likelihood_reshaped
-features_test = slidingWindow(lik_test, L=lenSeq_svm)
+# 特徴量生成
+features_SVMlik_train = slidingWindow(lik_train, L=lenSeq_svm)
+features_SVMlik_test = slidingWindow(lik_test, L=lenSeq_svm)
 
 # featuresの長さに合わせるためにラベル列の前を消去
-labels_svm_test = labels_pca_test[lenSeq_svm-1:]
-
+labels_SVMlik_train = labels_hmm_train[lenSeq_svm-1:]
+labels_SVMlik_test = labels_hmm_test[lenSeq_svm-1:]
 
 # SVMによる学習、テスト
 print "training SVM..."
 svm_lik = svm.SVC()
-svm_lik.fit(features_train, labels_svm_train)
+svm_lik.fit(features_SVMlik_train, labels_SVMlik_train)
 
-labels_predicted_SVMlik = svm_lik.predict(features_test)
-accuracy_SVMlik = accuracy_score(labels_predicted_SVMlik, labels_svm_test)
+labels_predicted_SVMlik = svm_lik.predict(features_SVMlik_test)
+accuracy_SVMlik = accuracy_score(labels_predicted_SVMlik, labels_SVMlik_test)
 
 print "SVM_lik accuracy=%f" % accuracy_SVMlik
+
+
+###############################################
+# PCA出力を特徴としたSVM
+
+# 特徴量生成
+features_SVMpca_train = slidingWindow(lefthand_pca_train, L=lenSeq_svm)
+features_SVMpca_test = slidingWindow(lefthand_pca_test, L=lenSeq_svm)
+
+# ラベル生成
+labels_SVMpca_train = labels_pca_train[lenSeq_svm-1:]
+labels_SVMpca_test = labels_pca_test[lenSeq_svm-1:]
+
+svm_pca = svm.SVC()
+svm_pca.fit(features_SVMpca_train, labels_pca_test)
+labels_predicted_SVMpca = svm_pca.predict(features_SVMpca_test)
+accuracy_SVMpca = accuracy_score(labels_predicted_SVMpca, labels_SVMpca_test)
+print "SVM_pca accuracy=%f" % accuracy_SVMpca
+
+
+###############################################
+# 尤度+PCA出力のハイブリッド特徴量でSVM
+
+# lik_trainとlefthand_pcaを列方向に結合
+pcalik_train = np.hstack((lefthand_pca_train[lenSeq_hmm-1:, :], lik_train))
+pcalik_test = np.hstack((lefthand_pca_test[lenSeq_hmm-1:, :], lik_test))
+# スライディングウィンドウ(長さlenSeq_svm)で特徴量生成
+lenSeq_svm = 10
+features_SVMhyb_train = slidingWindow(pcalik_train, L=lenSeq_svm)
+features_SVMhyb_test = slidingWindow(pcalik_test, L=lenSeq_svm)
+# ラベル生成
+labels_SVMhyb_train = labels_hmm_train[lenSeq_svm-1:]
+labels_SVMhyb_test = labels_hmm_test[lenSeq_svm-1:]
+# SVMによる学習、テスト
+svm_hyb = svm.SVC()
+svm_hyb.fit(features_SVMhyb_train, labels_SVMhyb_train)
+labels_predicted_SVMhyb = svm_hyb.predict(features_SVMhyb_test)
+accuracy_SVMhyb = accuracy_score(labels_predicted_SVMhyb, labels_SVMhyb_test)
+print "SVM_hyb accuracy=%f" % accuracy_SVMhyb
+
+###############################################
+# 生mocapデータを特徴としたSVM
+
+# 特徴量生成
+features_SVMmocap_train = slidingWindow(lefthand_mocap_train, L=lenSeq_svm)
+features_SVMmocap_test = slidingWindow(lefthand_mocap_test, L=lenSeq_svm)
+print features_SVMmocap_train.shape, features_SVMmocap_test.shape
+
+# ラベル生成
+labels_SVMmocap_train = labels_train[lenSeq_svm-1:]
+labels_SVMmocap_test = labels_test[lenSeq_svm-1:]
+print len(labels_SVMmocap_train), len(labels_SVMmocap_test)
+
+#SVMによる学習
+svm_mocap = svm.SVC()
+svm_mocap.fit(features_SVMmocap_train, labels_SVMmocap_train)
+labels_predicted_SVMmocap = svm_mocap.predict(features_SVMmocap_test)
+accuracy_SVMmocap = accuracy_score(labels_predicted_SVMmocap, labels_SVMmocap_test)
+print "SVM_mocap accuracy=%f" % accuracy_SVMmocap
+
 # 結果の保存
-result = {"accuracy_SVMlik":accuracy_SVMlik, "accuracy_hmm":accuracy_hmm, "lenSeq_hmm":lenSeq_hmm, "n_states":n_states, "lenSeq_svm":lenSeq_svm, \
+result = {"accuracy_SVMmocap":accuracy_SVMmocap, "accuracy_SVMpca":accuracy_SVMpca, \
+		  "accuracy_SVMlik":accuracy_SVMlik, "accuracy_SVMhyb":accuracy_SVMhyb, "accuracy_hmm":accuracy_hmm, \
+		  "lenSeq_hmm":lenSeq_hmm, "n_states":n_states, "lenSeq_svm":lenSeq_svm, \
 		  "lenSeq_pca":lenSeq_pca, "dimPCA":dimPCA}
 filename = "result_Lh%dns%dLs%d.dump" % (lenSeq_hmm, n_states, lenSeq_svm)
 pickle.dump(result, open(filename,"wb"))
+
+
+
+
+
