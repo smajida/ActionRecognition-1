@@ -152,7 +152,6 @@ print "SVM_pca accuracy=%f" % accuracy_SVMpca
 pcalik_train = np.hstack((lefthand_pca_train[lenSeq_hmm-1:, :], lik_train))
 pcalik_test = np.hstack((lefthand_pca_test[lenSeq_hmm-1:, :], lik_test))
 # スライディングウィンドウ(長さlenSeq_svm)で特徴量生成
-lenSeq_svm = 10
 features_SVMhyb_train = slidingWindow(pcalik_train, L=lenSeq_svm)
 features_SVMhyb_test = slidingWindow(pcalik_test, L=lenSeq_svm)
 # ラベル生成
