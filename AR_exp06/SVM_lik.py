@@ -11,7 +11,7 @@ from sklearn.metrics import accuracy_score
 import sys
 import pickle
 
-#引数の取得
+# 引数の取得
 argvs = sys.argv
 N_LABEL = 9
 lenSeq_pca = 3
@@ -139,7 +139,7 @@ labels_SVMpca_train = labels_pca_train[lenSeq_svm-1:]
 labels_SVMpca_test = labels_pca_test[lenSeq_svm-1:]
 
 svm_pca = svm.SVC()
-svm_pca.fit(features_SVMpca_train, labels_pca_test)
+svm_pca.fit(features_SVMpca_train, labels_pca_train)
 labels_predicted_SVMpca = svm_pca.predict(features_SVMpca_test)
 accuracy_SVMpca = accuracy_score(labels_predicted_SVMpca, labels_SVMpca_test)
 print "SVM_pca accuracy=%f" % accuracy_SVMpca
@@ -165,6 +165,7 @@ labels_predicted_SVMhyb = svm_hyb.predict(features_SVMhyb_test)
 accuracy_SVMhyb = accuracy_score(labels_predicted_SVMhyb, labels_SVMhyb_test)
 print "SVM_hyb accuracy=%f" % accuracy_SVMhyb
 
+
 ###############################################
 # 生mocapデータを特徴としたSVM
 
@@ -178,12 +179,13 @@ labels_SVMmocap_train = labels_train[lenSeq_svm-1:]
 labels_SVMmocap_test = labels_test[lenSeq_svm-1:]
 print len(labels_SVMmocap_train), len(labels_SVMmocap_test)
 
-#SVMによる学習
+# SVMによる学習
 svm_mocap = svm.SVC()
 svm_mocap.fit(features_SVMmocap_train, labels_SVMmocap_train)
 labels_predicted_SVMmocap = svm_mocap.predict(features_SVMmocap_test)
 accuracy_SVMmocap = accuracy_score(labels_predicted_SVMmocap, labels_SVMmocap_test)
 print "SVM_mocap accuracy=%f" % accuracy_SVMmocap
+
 
 # 結果の保存
 result = {"accuracy_SVMmocap":accuracy_SVMmocap, "accuracy_SVMpca":accuracy_SVMpca, \
@@ -192,8 +194,3 @@ result = {"accuracy_SVMmocap":accuracy_SVMmocap, "accuracy_SVMpca":accuracy_SVMp
 		  "lenSeq_pca":lenSeq_pca, "dimPCA":dimPCA}
 filename = "result_Lh%dns%dLs%d.dump" % (lenSeq_hmm, n_states, lenSeq_svm)
 pickle.dump(result, open(filename,"wb"))
-
-
-
-
-
