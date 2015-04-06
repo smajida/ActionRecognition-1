@@ -139,7 +139,7 @@ labels_SVMpca_train = labels_pca_train[lenSeq_svm-1:]
 labels_SVMpca_test = labels_pca_test[lenSeq_svm-1:]
 
 svm_pca = svm.SVC()
-svm_pca.fit(features_SVMpca_train, labels_pca_train)
+svm_pca.fit(features_SVMpca_train, labels_SVMpca_train)
 labels_predicted_SVMpca = svm_pca.predict(features_SVMpca_test)
 accuracy_SVMpca = accuracy_score(labels_predicted_SVMpca, labels_SVMpca_test)
 print "SVM_pca accuracy=%f" % accuracy_SVMpca
