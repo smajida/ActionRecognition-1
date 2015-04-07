@@ -100,7 +100,7 @@ for i in range(N_LABEL): # どのHMMを使うか
 labels_predicted_hmm = np.zeros(len(lik_test))
 # 尤度最大のものを推定とする
 for t in range(lik_test.shape[0]):
-	lik_test[t] = np.argmax(lik_test[t])
+	labels_predicted_hmm[t] = np.argmax(lik_test[t])
 	accuracy_hmm = accuracy_score(labels_predicted_hmm, labels_hmm_test)
 print "HMM accuracy=%f" % accuracy_hmm
 
