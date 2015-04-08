@@ -5,7 +5,7 @@
 # 離散姿勢ラベル列のMatlab用学習、テストデータを生成
 
 import numpy as np
-from sklearn.cluster import KMeans
+#from sklearn.cluster import KMeans
 import scipy.io as sio
 from sklearn import preprocessing
 import sys, csv, pickle
@@ -16,7 +16,7 @@ param2 = int(argvs[2]) #lenSeq
 
 ###学習データ
 #BVHの読み込み
-mocap_train = np.genfromtxt('../../tum_kitchen_dataset/poses_train.bvh', delimiter=" ")
+mocap_train = np.genfromtxt('../../TUMKitchenDataset/poses_train.bvh', delimiter=" ")
 
 #学習後のKmeannsモデル読み込み
 dumpname = 'kmeans_left_' + str(param1) + '.dump'
@@ -26,7 +26,7 @@ kmeans = pickle.load(open(dumpname, 'r'))
 postures_train_num = kmeans.labels_
 
 #学習ラベルデータの読み込み
-f_train = open('../../tum_kitchen_dataset/labels_train.csv')
+f_train = open('../../TUMKitchenDataset/labels_train.csv')
 reader_train = csv.reader(f_train)
 
 labels_train_str = []
@@ -68,7 +68,7 @@ sio.savemat(filename_train, {"posSeq_train": posSeq})
 ###テストデータ
 
 #BVH読み込み
-mocap_test = np.genfromtxt('../../tum_kitchen_dataset/poses_test.bvh', delimiter=" ")
+mocap_test = np.genfromtxt('../../TUMKitchenDataset/poses_test.bvh', delimiter=" ")
 # print mocap_test.shape
 lefthand_mocap_test = mocap_test[:, 40:55]
 
@@ -90,4 +90,3 @@ for i in range(len(postures_test_num)-(lenSeq-1)):
 
 filename_test = "posSeq_test_K" + str(param1) + 'T' + str(param2)
 sio.savemat(filename_test, {"posSeq_test": posSeq_test})
-
