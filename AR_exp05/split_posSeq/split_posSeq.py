@@ -49,7 +49,7 @@ labels_train = le.transform(labels_train_str)
 #各行動毎の学習データ保存用リスト
 posSeq = [None] * 9
 
-lenSeq = param1
+lenSeq = param2
 for i in range(len(postures_train_num)-(lenSeq-1)):
     seq = postures_train_num[i:i+lenSeq]
     if posSeq[labels_train[i]] == None: #対応する行動ラベルがNoneならそのまま代入
@@ -81,7 +81,6 @@ postures_test_num = kmeans.predict(lefthand_mocap_test)
 #各行動毎のテストデータ保存用リスト
 posSeq_test = None
 
-lenSeq = 50
 for i in range(len(postures_test_num)-(lenSeq-1)):
     seq = postures_test_num[i:i+lenSeq]
     if posSeq_test == None: #対応する行動ラベルがNoneならそのまま代入
